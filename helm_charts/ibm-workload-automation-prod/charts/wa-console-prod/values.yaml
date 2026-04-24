@@ -61,6 +61,29 @@ console:
     authDb:
   pwdSecretName: wa-pwd-secret
   libConfigName:
+  ldap:
+    enabled: false
+    # Optional existing ConfigMap name containing authentication_config.xml.
+    # If empty and ldap.enabled=true, the chart generates the ConfigMap automatically.
+    configMapName:
+    host:
+    port: 389
+    baseDN:
+    adminGroupName: Admins
+    ldapType: Microsoft Active Directory
+    bindSecretName:
+    bindDNKey: ldapBindDn
+    bindPasswordEncodedKey: ldapPasswordEncoded
+    searchTimeout: 20m
+    realmName: TWSRealm
+    repositoryId: AD
+    sslEnabled: false
+    sslRef: twaSSLSettings
+    userFilter: "(&(sAMAccountName=%v)(objectcategory=user))"
+    groupFilter: "(&(cn=%v)(objectcategory=group))"
+    userIdMap: "*:sAMAccountName"
+    groupIdMap: "*:cn"
+    groupMemberIdMap: "memberOf:member"
   livenessProbe:
     initialDelaySeconds: 100
   # Variable to specify the customized certificates for SSL communication
