@@ -363,7 +363,7 @@ where **<my_path>** is the location path of the mysecret.yaml file.
 	    type: Opaque
 	    data:
 	       SSL_PASSWORD: <hidden_password>
-             
+
      
 ### Configuring LDAP authentication for Dynamic Workload Console with Helm
 
