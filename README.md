@@ -345,24 +345,24 @@ where **<my_path>** is the location path of the mysecret.yaml file.
 3. You can optionally force the keystore password or use a non-randomic password. If you do not create a secret, the SSL password for the keystores is generated randomly. If you want to create a secret, use the following syntax:
 
 
-		apiVersion: v1
-		kind: Secret
-		metadata:
-			name: <release_name>-ssl-secret
-			namespace: <workload_automation_namespace>
-		labels:
-			app.kubernetes.io/instance wa-pwd-secret
-			app.kubernetes.io/managed-by: Helm
-			app.kubernetes.io/name: workload-automation-prod
-			environment: prod
-			helm.sh/chart: workload-automation-prod
-			release: wa-pwd-secret
-			annotations:
-			meta.helm.sh/release-name: wa-pwd-secret
-			meta.helm.sh/release-namespace: <workload_automation_namespace>
-		type: Opaque
-		data:
-			SSL_PASSWORD: <hidden_password>
+	    apiVersion: v1
+	    kind: Secret
+	    metadata:
+	      name: <release_name>-ssl-secret
+	      namespace: <workload_automation_namespace>
+   	     labels:
+                app.kubernetes.io/instance wa-pwd-secret
+                app.kubernetes.io/managed-by: Helm
+                app.kubernetes.io/name: workload-automation-prod
+                environment: prod
+                helm.sh/chart: workload-automation-prod
+                release: wa-pwd-secret
+              annotations:
+                meta.helm.sh/release-name: wa-pwd-secret
+                meta.helm.sh/release-namespace: <workload_automation_namespace>
+	    type: Opaque
+	    data:
+	       SSL_PASSWORD: <hidden_password>
              
      
 ### Configuring LDAP authentication for Dynamic Workload Console with Helm
