@@ -194,6 +194,8 @@ waserver:
             value: "ORACLE"
           - label: "MSSQL"
             value: "MSSQL"   
+          - label: "POSTGRESQL"
+            value: "POSTGRESQL"
           - label: "IDS"
             value: "IDS"
           - label: "POSTGRESQL"
@@ -489,11 +491,11 @@ waconsole:
         type: "string"
         required: false
     openIdClientName:
-    	__metadata:
-	      label: "OpenID Client name"
-	      description: "The name of the Client defined in ibm-common-services project for IAM configuration"
-	      type: "string"
-	      required: false        
+      __metadata:
+        label: "OpenID Client name"
+        description: "The name of the Client defined in ibm-common-services project for IAM configuration"
+        type: "string"
+        required: false        
     db:
       type:
         __metadata: 
@@ -508,12 +510,12 @@ waconsole:
             value: "ORACLE"
           - label: "MSSQL"
             value: "MSSQL"   
+          - label: "POSTGRESQL"
+            value: "POSTGRESQL"
           - label: "IDS"
             value: "IDS"  
           - label: "DERBY"
             value: "DERBY"
-          - label: "POSTGRESQL"
-            value: "POSTGRESQL"
       hostname:
         __metadata: 
           label: "Database host name" 
