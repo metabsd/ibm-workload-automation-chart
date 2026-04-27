@@ -82,9 +82,9 @@ From `LoadBalancer` to `Routes`
 You can access the IBM Workload Automation chart and container images from the Entitled Registry. See [Create the secret](#create-the-secret) for more information about accessing the registry. The images are as follows:
 
 
-* icr.io/cp/ibm-workload-automation-agent-dynamic:10.2.7.00.20260424
-* icr.io/cp/ibm-workload-automation-server:10.2.7.00.20260424
-* icr.io/cp/ibm-workload-automation-console:10.2.7.00.20260424
+* icr.io/cp/ibm-workload-automation-agent-dynamic:10.2.7.00.20260424.amd64
+* icr.io/cp/ibm-workload-automation-server:10.2.7.00.20260424.amd64
+* icr.io/cp/ibm-workload-automation-console:10.2.7.00.20260424.amd64
 
 ## Other supported tags
 * 10.2.6.00.20251212
