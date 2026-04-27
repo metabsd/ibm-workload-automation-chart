@@ -10,6 +10,12 @@ global:
   serviceAccountName: wauser
   useClusterRole: false
   aidaEngineLogLevel: "INFO"
+    # Geographical data
+  certManager:
+    organization: "IBM"
+    locality: "Rome"
+    province: "Lazio"
+    country: "IT"
   redisPwd: "default"
   defaultShardCount: 1
   enablePrometheus: true
@@ -21,6 +27,9 @@ global:
       value: "prod"
   routeType: passthrough # reencrypt
 waagent:
+  agentCommonName: "waagent"
+  issuerName: "wa-ca-issuer"
+  issuerKind: "Issuer"
   enableAgent: true
   licenseType: "PVU"
   runAsUser: 999
@@ -119,6 +128,9 @@ waagent:
       cpu: 200m
       memory: 200Mi
 waconsole:
+  consoleCommonName: "waconsole"
+  issuerName: "wa-ca-issuer"
+  issuerKind: "Issuer"
   enableConsole: true
   enableNginxServer: true
   runAsUser: 999
@@ -239,6 +251,10 @@ waconsole:
       cpu: 1
       memory: 4Gi
 waserver:
+  serverCommonName: "waserver"
+  agentextCommonName: "waagent"
+  issuerName: "wa-ca-issuer"
+  issuerKind: "Issuer"
   enableServer: true
   licenseType: "PVU"
   runAsUser: 999
@@ -384,6 +400,9 @@ waserver:
     certDuration: 2160h # 90d
     certRenewBefore: 360h # 15d    
 wafileproxy:
+  fileproxyCommonName: "wafileproxy"
+  issuerName: "wa-ca-issuer"
+  issuerKind: "Issuer"
   enableFileProxy: false
   replicaCount: 1
   image:
