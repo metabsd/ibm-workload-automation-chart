@@ -11,6 +11,7 @@
 {{ $fullName := include "wa.fullName" . }}
 {{ $serviceName := include "waDwc.ServiceName" . }}
 {{ $configName := include "waconsole.ConfigName" .}}
+{{ $ldapConfigName := (printf "%s-%s" $fullName "console-ldap-liberty-config") }}
 {{ $waUserName := include "wa.console.waUser" .}}
 {{ $pluginsConfiName := (printf "%s-%s" $fullName "console-plugins-config") }}
 {{ $packagesUrl := include "waconsole.packagesUrl" . }}
@@ -171,6 +172,18 @@ spec:
           value: {{ .Values.console.containerDebug | quote }}
         - name: WA_ENABLE_SSO
           value: {{ .Values.console.enableSSO | quote }}
+      {{- if .Values.console.ldap.enabled }}
+        - name: LDAP_BIND_DN
+          valueFrom:
+            secretKeyRef:
+              name: {{ required "console.ldap.bindSecretName is required when console.ldap.enabled=true" .Values.console.ldap.bindSecretName }}
+              key: {{ .Values.console.ldap.bindDNKey | default "ldapBindDn" }}
+        - name: LDAP_BIND_PASSWORD_ENC
+          valueFrom:
+            secretKeyRef:
+              name: {{ required "console.ldap.bindSecretName is required when console.ldap.enabled=true" .Values.console.ldap.bindSecretName }}
+              key: {{ .Values.console.ldap.bindPasswordEncodedKey | default "ldapPasswordEncoded" }}
+      {{- end }}
       {{- if .Values.console.adminGroup  }}
         - name: WA_ADMIN_GROUP
           value: {{ .Values.console.adminGroup | quote }}
@@ -293,7 +306,7 @@ spec:
           mountPath: /opt/wautils/certs
         - name: password-bind-volume
           mountPath: /opt/service-bind
-{{- if .Values.console.libConfigName }}          
+{{- if or .Values.console.libConfigName .Values.console.ldap.enabled }}          
         - name: config-liberty-volume
           mountPath: /opt/wautils/dropins 
 {{- end }}
@@ -328,10 +341,14 @@ spec:
           name: {{ include "wa.fullName" . }}-console-scripts
           defaultMode: 0777
           optional: true
-{{- if .Values.console.libConfigName }} 
+{{- if or .Values.console.libConfigName .Values.console.ldap.enabled }} 
       - name: config-liberty-volume
         configMap:
+{{- if .Values.console.ldap.enabled }}
+          name: {{ default $ldapConfigName .Values.console.ldap.configMapName }}
+{{- else }}
           name: {{ default $configName .Values.console.libConfigName }}   
+{{- end }}
 {{- end }}
 {{- if ne (len .Values.persistence.extraVolumes) 0 }}
 {{ toYaml .Values.persistence.extraVolumes | indent 6 }}

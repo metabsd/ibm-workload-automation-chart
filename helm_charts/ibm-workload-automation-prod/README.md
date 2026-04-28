@@ -272,6 +272,97 @@ where:
 	  
 where **<my_path>** is the location path of the mysecret.yaml file.	
 
+### Configuring LDAP authentication for Dynamic Workload Console with Helm
+
+You can configure the Dynamic Workload Console (DWC) LDAP authentication directly from Helm values.
+
+When `waconsole.console.ldap.enabled=true`, the chart mounts a Liberty drop-in configuration containing `authentication_config.xml` and reads LDAP bind credentials from a Kubernetes Secret.
+
+#### 1) Prepare LDAP bind secret (recommended approach)
+
+Prepare the bind password in encoded form using Liberty `securityUtility`, then create the Kubernetes secret used by the chart.
+
+Set your variables:
+
+```bash
+NS="ibm-workload-scheduler"
+PULL_SECRET="sa-ibm-workload-scheduler"
+LDAP_PASSWORD="YOUR_LDAP_PASSWORD"
+LDAP_BIND_DN="CN=LdapWas001,CN=Users,DC=example,DC=com"
+SECRET_NAME="dwc-ldap-secret"
+BIND_DN_KEY="ldapBindDn"
+PASSWORD_ENC_KEY="ldapPasswordEncoded"
+IMAGE="cp.icr.io/cp/ibm-workload-automation-console:10.2.6.00.20251212"
+```
+
+Run the command (encoding + secret create/update):
+
+```bash
+POD_NAME="encoder-$(date +%s)" && \
+oc run "$POD_NAME" --restart=Never -n "$NS" \
+	--image="$IMAGE" \
+	--overrides="{\"spec\":{\"imagePullSecrets\":[{\"name\":\"$PULL_SECRET\"}]}}" \
+	--command -- bash -lc "JAVA_HOME=/opt/dwc/java/jre /opt/wlp/bin/securityUtility encode '$LDAP_PASSWORD'" >/dev/null && \
+until [[ "$(oc get pod "$POD_NAME" -n "$NS" -o jsonpath='{.status.phase}' 2>/dev/null)" =~ ^(Succeeded|Failed)$ ]]; do sleep 1; done && \
+ENCODED="$(oc logs "$POD_NAME" -n "$NS" | grep -E '^\{(xor|aes)\}' | tail -1)" && \
+echo "ENCODED=$ENCODED" && \
+oc delete pod "$POD_NAME" -n "$NS" --ignore-not-found >/dev/null && \
+[[ -n "$ENCODED" ]] && oc create secret generic "$SECRET_NAME" \
+	--from-literal="$BIND_DN_KEY=$LDAP_BIND_DN" \
+	--from-literal="$PASSWORD_ENC_KEY=$ENCODED" \
+	-n "$NS" --dry-run=client -o yaml | oc apply -f -
+```
+
+This command is idempotent (`oc apply`) and works if the secret already exists.
+
+These key names can be customized with Helm values:
+- `waconsole.console.ldap.bindDNKey` (default: `ldapBindDn`)
+- `waconsole.console.ldap.bindPasswordEncodedKey` (default: `ldapPasswordEncoded`)
+
+#### 2) Enable LDAP in values.yaml
+
+Use the following example as a starting point:
+
+```yaml
+waconsole:
+	console:
+		ldap:
+			enabled: true
+			host: msldap.example.com
+			port: 389
+			baseDN: dc=example,dc=com
+			adminGroupName: Admins
+			bindSecretName: dwc-ldap-secret
+			sslEnabled: false
+```
+
+Then deploy or upgrade:
+
+		helm upgrade --install <workload_automation_release_name> <repo_name>/ibm-workload-automation-prod -f values.yaml -n <workload_automation_namespace>
+
+#### 3) LDAP SSL / LDAPS
+
+For SSL-enabled LDAP, set:
+- `waconsole.console.ldap.sslEnabled=true`
+- `waconsole.console.ldap.port` to your LDAPS port (for example `636`)
+
+If your LDAP uses a private CA, import the CA certificate into the truststore used by DWC before enabling SSL. You can manage this as a pre-deployment step, similarly to certificate secrets handling in your environment.
+
+#### 4) Advanced option: use an existing LDAP ConfigMap
+
+If you already manage your own `authentication_config.xml`, you can skip chart-generated content and provide an existing ConfigMap:
+
+```yaml
+waconsole:
+	console:
+		ldap:
+			enabled: true
+			configMapName: my-existing-ldap-config
+			bindSecretName: dwc-ldap-secret
+```
+
+In this mode, the chart mounts your ConfigMap and still injects bind credentials from the LDAP secret.
+
 ### Configuring the Microsoft Azure SQL server database ###
 
 ![Microsoft Azure](images/tagmsa.png "Microsoft Azure") 
@@ -838,6 +929,16 @@ The following table lists the configurable parameters of the chart relative to t
 | waconsole.console.tz                                | If used, it sets the TZ operating system environment variable                                                                                                                                                                                                           | no            | America/Chicago                  |                                                  |
 | waconsole.console.certSecretName                    | The name of the secret to store customized SSL certificates                                                                                                                                                                                                            | no            | waconsole-cert-secret            |                                                    |
 | waconsole.console.libConfigName                     | The name of the ConfigMap to store all custom liberty configuration                                                                                                                                                                                                    | no            | libertyConfigMap                 |                                                    |
+| waconsole.console.ldap.enabled                      | Enable LDAP configuration for DWC and mount LDAP Liberty configuration                                                                                                                           | no            | true                             | false                                              |
+| waconsole.console.ldap.configMapName                | Optional existing ConfigMap containing `authentication_config.xml`                                                                                                                                | no            | my-existing-ldap-config          | (chart-generated)                                  |
+| waconsole.console.ldap.host                         | LDAP server hostname or IP address                                                                                                                                                                                       | yes if LDAP enabled | ldap.example.com            |                                                    |
+| waconsole.console.ldap.port                         | LDAP server port                                                                                                                                                                                                            | no            | 389                              | 389                                                |
+| waconsole.console.ldap.baseDN                       | LDAP base DN used as search root                                                                                                                                                                                           | yes if LDAP enabled | dc=example,dc=com          |                                                    |
+| waconsole.console.ldap.bindSecretName               | Secret name containing bind DN and encoded bind password                                                                                                                                                                   | yes if LDAP enabled | dwc-ldap-secret            |                                                    |
+| waconsole.console.ldap.bindDNKey                    | Secret key name for bind DN                                                                                                                                                                                                | no            | ldapBindDn                       | ldapBindDn                                         |
+| waconsole.console.ldap.bindPasswordEncodedKey       | Secret key name for encoded bind password                                                                                                                                                                                  | no            | ldapPasswordEncoded              | ldapPasswordEncoded                                |
+| waconsole.console.ldap.sslEnabled                   | Enable SSL for LDAP registry                                                                                                                                                                                               | no            | false                            | false                                              |
+| waconsole.console.ldap.sslRef                       | Liberty SSL reference used by LDAP registry                                                                                                                                                                                | no            | twaSSLSettings                   | twaSSLSettings                                     |
 | waconsole.console.routes.enabled                   | If true, the ingress controller rules is enabled                                                                                                                                                                                                                       | no            | true                             | true                                               |
 | waconsole.resources.requests.cpu                    | The minimum CPU requested to run                                                                                                                                                                                                                                       | yes           | 1                                | 1                                                  | 
 | waconsole.resources.requests.memory                 | The minimum memory requested to run                                                                                                                                                                                                                                    | yes           | 4Gi                              | 4Gi                                                | 
@@ -1440,7 +1541,7 @@ For more information about using Grafana dashboards see [Dashboards overview](ht
 *  Limited to amd64 platforms.
 *  Anonymous connections are not permitted.
 *  When sharing Dynamic Workload Console resources, such as tasks, engines, scheduling objects and so on, to groups, ensure the user sharing the resource is a member of the group to which the user is sharing the resourc.
-*  LDAP configuration on the chart is not supported. Manual configuration is required using the traditional LDAP configuration. 
+*  LDAP over SSL requires that the LDAP CA certificate is trusted by the Dynamic Workload Console Liberty truststore.
 
 
 ## Documentation

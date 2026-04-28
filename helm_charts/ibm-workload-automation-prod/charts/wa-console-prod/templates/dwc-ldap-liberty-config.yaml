@@ -1,0 +1,72 @@
+####################################################################
+# Licensed Materials Property of HCL*
+# (c) Copyright HCL Technologies Ltd. 2026. All rights reserved.
+#
+# * Trademark of HCL Technologies Limited
+####################################################################
+{{- include "wa.init" (list . "waconsole") }}
+{{- $fullName := include "wa.fullName" . }}
+{{- $ldapConfigName := (printf "%s-%s" $fullName "console-ldap-liberty-config") }}
+{{- if and .Values.console.ldap.enabled (not .Values.console.ldap.configMapName) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $ldapConfigName }}
+  labels:
+{{ include "wa.console.labels" . | indent 4 }}
+data:
+  authentication_config.xml: |
+    <server description="federated_basicLDAP">
+      <variable name="admin.group.name" value="{{ .Values.console.ldap.adminGroupName | default "Admins" }}"/>
+      <variable name="ldap.base.DN" value="{{ required "console.ldap.baseDN is required when console.ldap.enabled=true" .Values.console.ldap.baseDN }}"/>
+      <variable name="ldap.port" value="{{ .Values.console.ldap.port | default 389 }}"/>
+      <variable name="ldap.host" value="{{ required "console.ldap.host is required when console.ldap.enabled=true" .Values.console.ldap.host }}"/>
+      <variable name="ldap.adminDN" value="${env.LDAP_BIND_DN}"/>
+      <variable name="ldap.password" value="${env.LDAP_BIND_PASSWORD_ENC}"/>
+
+      <jndiEntry value="${admin.group.name}" jndiName="admin.group.name" />
+
+      <administrator-role>
+        <group>${admin.group.name}</group>
+      </administrator-role>
+
+      <federatedRepository searchTimeout="{{ .Values.console.ldap.searchTimeout | default "20m" }}">
+        <primaryRealm name="{{ .Values.console.ldap.realmName | default "TWSRealm" }}" allowOpIfRepoDown="true">
+          <participatingBaseEntry name="o=BasicRealm"/>
+          <participatingBaseEntry name="${ldap.base.DN}"/>
+          <uniqueGroupIdMapping inputProperty="uniqueName" outputProperty="uniqueName"/>
+          <groupSecurityNameMapping inputProperty="cn" outputProperty="cn"/>
+          <groupDisplayNameMapping inputProperty="cn" outputProperty="cn"/>
+          <userDisplayNameMapping inputProperty="principalName" outputProperty="principalName"/>
+          <userSecurityNameMapping inputProperty="principalName" outputProperty="principalName"/>
+          <uniqueUserIdMapping inputProperty="uniqueName" outputProperty="uniqueName"/>
+        </primaryRealm>
+      </federatedRepository>
+
+      <ldapRegistry id="{{ .Values.console.ldap.repositoryId | default "AD" }}"
+                    host="${ldap.host}" port="${ldap.port}" ignoreCase="true"
+                    baseDN="${ldap.base.DN}"
+                    bindDN="${ldap.adminDN}"
+                    bindPassword="${ldap.password}"
+                    ldapType="{{ .Values.console.ldap.ldapType | default "Microsoft Active Directory" }}"
+                    sslEnabled="{{ .Values.console.ldap.sslEnabled | default false }}"
+                    sslRef="{{ .Values.console.ldap.sslRef | default "twaSSLSettings" }}">
+        <activedFilters
+          userFilter="{{ .Values.console.ldap.userFilter | default "(&(sAMAccountName=%v)(objectcategory=user))" | replace "&" "&amp;" }}"
+          groupFilter="{{ .Values.console.ldap.groupFilter | default "(&(cn=%v)(objectcategory=group))" | replace "&" "&amp;" }}"
+          userIdMap="{{ .Values.console.ldap.userIdMap | default "*:sAMAccountName" }}"
+          groupIdMap="{{ .Values.console.ldap.groupIdMap | default "*:cn" }}"
+          groupMemberIdMap="{{ .Values.console.ldap.groupMemberIdMap | default "memberOf:member" }}">
+        </activedFilters>
+      </ldapRegistry>
+
+      <basicRegistry id="basic" realm="BasicRealm">
+        <!-- DO NOT DELETE -->
+        <user name="${user.twsuser.id}" password="${user.twsuser.password}"/>
+        <!-- END DO NOT DELETE -->
+        <group name="${admin.group.name}">
+          <member name="${user.twsuser.id}"/>
+        </group>
+      </basicRegistry>
+    </server>
+{{- end }}
