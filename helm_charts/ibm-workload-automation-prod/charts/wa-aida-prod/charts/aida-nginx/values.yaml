@@ -38,6 +38,7 @@ service:
   port: 9432
 routes:
   enabled: true
+  routeType: # Defaults to reencrypt if empty (edge, reencrypt, passthrough)
 ingress:
   hostname:
   secretName: aida-nginx-ingress-secret

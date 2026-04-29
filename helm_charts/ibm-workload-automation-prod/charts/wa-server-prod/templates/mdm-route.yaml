@@ -6,6 +6,7 @@
 #
 # * Trademark of HCL Technologies Limited
 ####################################################################
+{{- $routeType := .Values.server.routes.routeType | default .Values.global.routeType | default "passthrough" }}
 kind: Route
 apiVersion: route.openshift.io/v1
 metadata:
@@ -24,19 +25,15 @@ spec:
   port:
     targetPort: server-https
   tls:
-    termination: {{ .Values.global.routeType | default "passthrough" }}
+    termination: {{ $routeType }}
+    {{- if ne ($routeType | upper) "PASSTHROUGH" }}
     insecureEdgeTerminationPolicy: None
-    {{- if eq (.Values.global.routeType | upper) "REENCRYPT" }}
+    {{- end }}
+    {{- if eq ($routeType | upper) "REENCRYPT" }}
     {{- $secret := lookup "v1" "Secret" .Release.Namespace "ca-key-pair" }}
-    {{- if $secret }}
-    {{- if index $secret.data "tls.crt" }}
+    {{- if and $secret (hasKey $secret.data "tls.crt") }}
     destinationCACertificate: |
 {{ index $secret.data "tls.crt" | b64dec | indent 6 }}
-    {{- else }}
-    {{- fail "Secret ca-key-pair exists but does not contain the tls.crt key" }}
-    {{- end }}
-    {{- else }}
-    {{- fail "reencrypt mode enabled but secret ca-key-pair does not exist in the namespace" }}
     {{- end }}
     {{- end }}
   wildcardPolicy: None
@@ -70,19 +67,15 @@ spec:
   port:
     targetPort: server-ssl-eif
   tls:
-    termination: {{ $root.Values.global.routeType | default "passthrough" }}
+    termination: {{ $routeType }}
+    {{- if ne ($routeType | upper) "PASSTHROUGH" }}
     insecureEdgeTerminationPolicy: None
-    {{- if eq ($root.Values.global.routeType | upper) "REENCRYPT" }}
-    {{- $secret := lookup "v1" "Secret" $root.Release.Namespace "ca-key-pair" }}
-    {{- if $secret }}
-    {{- if index $secret.data "tls.crt" }}
+    {{- end }}
+    {{- if eq ($routeType | upper) "REENCRYPT" }}
+    {{- $secret := lookup "v1" "Secret" .Release.Namespace "ca-key-pair" }}
+    {{- if and $secret (hasKey $secret.data "tls.crt") }}
     destinationCACertificate: |
 {{ index $secret.data "tls.crt" | b64dec | indent 6 }}
-    {{- else }}
-    {{- fail "Secret ca-key-pair exists but does not contain the tls.crt key" }}
-    {{- end }}
-    {{- else }}
-    {{- fail "reencrypt mode enabled but secret ca-key-pair does not exist in the namespace" }}
     {{- end }}
     {{- end }}
   wildcardPolicy: None

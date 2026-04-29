@@ -22,6 +22,7 @@ fileProxy:
   port: 44444
   route:
     enabled: false
+    routeType: # Defaults to reencrypt if empty (edge, reencrypt, passthrough)
   exposeServiceType: Ingress
   exposeServiceAnnotation: {}
 podAnnotations: {}

@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "IBM Workload Automation values schema",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "global": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "routeType": {
+          "type": ["string", "null"],
+          "enum": [
+            null,
+            "edge",
+            "reencrypt",
+            "passthrough"
+          ]
+        }
+      }
+    },
+    "waconsole": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "console": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "routes": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "routeType": {
+                  "type": ["string", "null"],
+                  "enum": [
+                    null,
+                    "edge",
+                    "reencrypt",
+                    "passthrough"
+                  ],
+                  "default": "reencrypt"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "waserver": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "server": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "routes": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "routeType": {
+                  "type": ["string", "null"],
+                  "enum": [
+                    null,
+                    "edge",
+                    "reencrypt",
+                    "passthrough"
+                  ],
+                  "default": "passthrough"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "wafileproxy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "fileProxy": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "route": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "routeType": {
+                  "type": ["string", "null"],
+                  "enum": [
+                    null,
+                    "edge",
+                    "reencrypt",
+                    "passthrough"
+                  ],
+                  "default": "reencrypt"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "waaida": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "aida-nginx": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "routes": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "routeType": {
+                  "type": ["string", "null"],
+                  "enum": [
+                    null,
+                    "edge",
+                    "reencrypt",
+                    "passthrough"
+                  ],
+                  "default": "reencrypt"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
