@@ -25,7 +25,7 @@ global:
   customLabels:
     - name: "environment"
       value: "prod"
-  routeType: passthrough # reencrypt
+  routeType: # Legacy fallback for route TLS termination (edge, reencrypt, passthrough)
 waagent:
   agentCommonName: "waagent"
   issuerName: "wa-ca-issuer"
@@ -164,6 +164,7 @@ waconsole:
       authDb:
     routes:
       enabled: true
+      routeType: # Defaults to reencrypt if empty (edge, reencrypt, passthrough)
     ingress:
       hostname:
       className:
@@ -375,6 +376,7 @@ waserver:
     routes:
       enabled: true
       hostname:
+      routeType: # Defaults to passthrough if empty (edge, reencrypt, passthrough)
     ingress:
       hostname:
       className:
@@ -444,6 +446,7 @@ wafileproxy:
     port: 44444
     route:
       enabled: false
+      routeType: # Defaults to reencrypt if empty (edge, reencrypt, passthrough)
     exposeServiceType: Ingress
     exposeServiceAnnotation: {}
       #cert-manager.io/issuer: wa-ca-issuer
@@ -612,6 +615,7 @@ waaida:
       name: ""
     routes:
       enabled: true
+      routeType: # Defaults to reencrypt if empty (edge, reencrypt, passthrough)
     ingress:
       hostname:
       secretName: wa-console-ingress-secret

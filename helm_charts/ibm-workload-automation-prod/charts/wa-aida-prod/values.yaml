@@ -128,6 +128,7 @@ aida-nginx:
     name: ""
   routes:
     enabled: true
+    routeType: # Defaults to reencrypt if empty (edge, reencrypt, passthrough)
   ingress:
     hostname:
     secretName: wa-console-ingress-secret

@@ -1084,6 +1084,56 @@ The IBM Workload Automation server and console can use two different ways to rou
 
 You can freely switch between these two types of configuration.
 
+#### Route TLS termination per component (OpenShift)
+
+When `Route` resources are enabled, TLS termination can be configured independently per component.
+
+Supported values are:
+
+* `edge`
+* `reencrypt`
+* `passthrough`
+
+Default values are:
+
+* `waconsole`: `reencrypt`
+* `waserver`: `passthrough`
+* `waaida`: `reencrypt`
+* `wafileproxy`: `reencrypt`
+
+Configuration keys:
+
+* `waconsole.console.routes.routeType`
+* `waserver.server.routes.routeType`
+* `waaida.aida-nginx.routes.routeType`
+* `wafileproxy.fileProxy.route.routeType`
+
+Legacy compatibility is preserved. If a component key is not set, `global.routeType` is still used as fallback.
+
+Mixed deployment example (console in reencrypt, server in passthrough):
+
+```yaml
+waconsole:
+	console:
+		routes:
+			routeType: reencrypt
+
+waserver:
+	server:
+		routes:
+			routeType: passthrough
+
+waaida:
+	aida-nginx:
+		routes:
+			routeType: reencrypt
+
+wafileproxy:
+	fileProxy:
+		route:
+			routeType: reencrypt
+```
+
 #### Network policy
 
 You can specify an egress network policy to include a list of allowed egress rules for the server, console, and agent components. Each rule allows traffic leaving the cluster which matches both the "to" and "ports" sections. For example, the following sample demonstrates how to allow egress to another destination:

@@ -92,6 +92,7 @@ console:
   tz:
   routes:
     enabled: true
+    routeType: # Defaults to reencrypt if empty (edge, reencrypt, passthrough)
   exposeServiceType: None
   exposeServiceAnnotation: {}
   networkpolicyEgress: {}
